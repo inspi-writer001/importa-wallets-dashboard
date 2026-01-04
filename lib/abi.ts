@@ -1,0 +1,72 @@
+export const tNGN_ABI = [
+  {
+    type: 'event',
+    name: 'MetaTransferExecuted',
+    inputs: [
+      { name: 'from', type: 'address', indexed: true },
+      { name: 'to', type: 'address', indexed: true },
+      { name: 'amount', type: 'uint256', indexed: false },
+      { name: 'isPlatformTransfer', type: 'bool', indexed: false },
+      { name: 'relayer', type: 'address', indexed: true },
+      { name: 'nonce', type: 'uint256', indexed: false },
+    ],
+  },
+  {
+    type: 'event',
+    name: 'FeesCollected',
+    inputs: [
+      { name: 'from', type: 'address', indexed: true },
+      { name: 'to', type: 'address', indexed: true },
+      { name: 'amount', type: 'uint256', indexed: false },
+      { name: 'psbFee', type: 'uint256', indexed: false },
+      { name: 'importaFee', type: 'uint256', indexed: false },
+      { name: 'fgFee', type: 'uint256', indexed: false },
+      { name: 'transferType', type: 'uint8', indexed: false },
+    ],
+  },
+  {
+    type: 'event',
+    name: 'TokensBurned',
+    inputs: [
+      { name: 'from', type: 'address', indexed: true },
+      { name: 'amount', type: 'uint256', indexed: false },
+      { name: 'burner', type: 'address', indexed: true },
+      {
+        name: 'metadata',
+        type: 'tuple',
+        indexed: false,
+        components: [
+          { name: 'destinationBankCode', type: 'string' },
+          { name: 'destinationName', type: 'string' },
+          { name: 'destinationBankAccountNumber', type: 'string' },
+          { name: 'senderAccountNumber', type: 'string' },
+          { name: 'narration', type: 'string' },
+          { name: 'senderName', type: 'string' },
+          { name: 'fromLocation', type: 'string' },
+          { name: 'txAmount', type: 'uint256' },
+        ],
+      },
+    ],
+  },
+  {
+    type: 'function',
+    name: 'balanceOf',
+    stateMutability: 'view',
+    inputs: [{ name: 'account', type: 'address' }],
+    outputs: [{ type: 'uint256' }],
+  },
+  {
+    type: 'function',
+    name: 'totalSupply',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ type: 'uint256' }],
+  },
+  {
+    type: 'function',
+    name: 'decimals',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ type: 'uint8' }],
+  },
+] as const
