@@ -5,6 +5,7 @@ import { useContractEvents } from '@/hooks/useContractEvents'
 import { useMemo } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { formatDate } from '@/lib/utils'
+import { ShimmerLoader } from './ShimmerLoader'
 
 export const TransactionCountChart = () => {
   const { data: wallets, isLoading: walletsLoading } = useWallets()
@@ -38,13 +39,13 @@ export const TransactionCountChart = () => {
 
   const isLoading = walletsLoading || eventsLoading
 
-  if (isLoading) {
+  if (isLoading || !events) {
     return (
       <div className="p-6 rounded border border-light-border dark:border-dark-border bg-light-surface dark:bg-dark-surface">
         <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary mb-4">
           Transaction Count Over Time
         </h3>
-        <div className="h-80 w-full bg-light-border dark:bg-dark-border animate-pulse rounded" />
+        <ShimmerLoader variant="chart" />
       </div>
     )
   }

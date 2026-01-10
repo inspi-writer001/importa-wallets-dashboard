@@ -5,6 +5,7 @@ import { shortenAddress } from '@/lib/utils'
 import { useWallets } from '@/hooks/useWallets'
 import { useContractEvents } from '@/hooks/useContractEvents'
 import { useMemo } from 'react'
+import { ShimmerLoader } from './ShimmerLoader'
 
 interface ContractLinkProps {
   label: string
@@ -83,7 +84,7 @@ export const ContractInfo = () => {
             <span className="text-xs font-medium text-light-text-secondary dark:text-dark-text-secondary">
               Recent Relayer
             </span>
-            <div className="h-5 w-32 bg-light-border dark:bg-dark-border animate-pulse rounded" />
+            <ShimmerLoader variant="text" className="h-5 w-32" />
           </div>
         ) : mostRecentRelayer ? (
           <ContractLink

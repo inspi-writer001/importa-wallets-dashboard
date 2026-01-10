@@ -6,6 +6,7 @@ import { useMemo } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { shortenAddress } from '@/lib/utils'
 import { Address } from 'viem'
+import { ShimmerLoader } from './ShimmerLoader'
 
 export const TopWalletsChart = () => {
   const { data: wallets, isLoading: walletsLoading } = useWallets()
@@ -40,13 +41,13 @@ export const TopWalletsChart = () => {
 
   const isLoading = walletsLoading || eventsLoading
 
-  if (isLoading) {
+  if (isLoading || !events) {
     return (
       <div className="p-6 rounded border border-light-border dark:border-dark-border bg-light-surface dark:bg-dark-surface">
         <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary mb-4">
           Top Wallets by Transaction Count
         </h3>
-        <div className="h-80 w-full bg-light-border dark:bg-dark-border animate-pulse rounded" />
+        <ShimmerLoader variant="chart" />
       </div>
     )
   }

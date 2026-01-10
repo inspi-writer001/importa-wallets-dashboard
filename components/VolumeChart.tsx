@@ -7,6 +7,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { formatTokenAmount, formatDate } from '@/lib/utils'
 import { formatUnits } from 'viem'
 import { TOKEN_DECIMALS } from '@/lib/constants'
+import { ShimmerLoader } from './ShimmerLoader'
 
 export const VolumeChart = () => {
   const { data: wallets } = useWallets()
@@ -40,13 +41,13 @@ export const VolumeChart = () => {
       .sort((a, b) => a.timestamp - b.timestamp)
   }, [events])
 
-  if (isLoading) {
+  if (isLoading || !events) {
     return (
       <div className="p-6 rounded border border-light-border dark:border-dark-border bg-light-surface dark:bg-dark-surface">
         <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary mb-4">
           Transaction Volume Over Time
         </h3>
-        <div className="h-80 w-full bg-light-border dark:bg-dark-border animate-pulse rounded" />
+        <ShimmerLoader variant="chart" />
       </div>
     )
   }

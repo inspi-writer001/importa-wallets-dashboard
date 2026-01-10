@@ -5,6 +5,7 @@ import { useContractEvents } from '@/hooks/useContractEvents'
 import { useTotalSupply } from '@/hooks/useTotalSupply'
 import { formatTokenAmount, formatNumber } from '@/lib/utils'
 import { useMemo } from 'react'
+import { ShimmerLoader } from './ShimmerLoader'
 
 interface StatCardProps {
   title: string
@@ -20,7 +21,7 @@ const StatCard = ({ title, value, subtitle, isLoading }: StatCardProps) => {
         {title}
       </h3>
       {isLoading ? (
-        <div className="h-8 w-24 bg-light-border dark:bg-dark-border animate-pulse rounded" />
+        <ShimmerLoader variant="card" />
       ) : (
         <>
           <p className="text-3xl font-bold text-light-text-primary dark:text-dark-text-primary mb-1">
@@ -48,6 +49,7 @@ export const SummaryCards = () => {
         totalActiveWallets: 0,
         totalMetaTransfers24h: 0,
         totalVolumeProcessed: 0n,
+        totalDeposits: 0,
       }
     }
 
@@ -68,10 +70,9 @@ export const SummaryCards = () => {
       totalActiveWallets: wallets?.length || 0,
       totalMetaTransfers24h: recentTransfers.length,
       totalVolumeProcessed: totalVolume,
+      totalDeposits: events.tokensDeposited.length,
     }
   }, [events, wallets])
-
-  const isLoading = walletsLoading || eventsLoading || totalSupplyLoading
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -79,25 +80,25 @@ export const SummaryCards = () => {
         title="Total Active Wallets"
         value={formatNumber(metrics.totalActiveWallets)}
         subtitle="Tracked wallets"
-        isLoading={isLoading}
+        isLoading={walletsLoading}
       />
       <StatCard
         title="MetaTransfers (24h)"
         value={formatNumber(metrics.totalMetaTransfers24h)}
         subtitle="Last 24 hours"
-        isLoading={isLoading}
+        isLoading={eventsLoading}
       />
       <StatCard
         title="Total Volume"
         value={formatTokenAmount(metrics.totalVolumeProcessed)}
         subtitle="tNGN transferred"
-        isLoading={isLoading}
+        isLoading={eventsLoading}
       />
       <StatCard
         title="Circulating Supply"
         value={formatTokenAmount(totalSupply || 0n)}
         subtitle="Total tNGN in circulation"
-        isLoading={isLoading}
+        isLoading={totalSupplyLoading}
       />
     </div>
   )

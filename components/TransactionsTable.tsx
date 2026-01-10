@@ -6,6 +6,19 @@ import { useMemo, useState } from 'react'
 import { formatTokenAmount, shortenAddress } from '@/lib/utils'
 import { formatUnits } from 'viem'
 import { TOKEN_DECIMALS } from '@/lib/constants'
+import { ShimmerLoader } from './ShimmerLoader'
+
+type Transaction = {
+  transactionHash: `0x${string}`
+  blockNumber: bigint
+  from: string
+  to: string
+  amount: bigint
+  type: 'Internal' | 'External' | 'Deposit'
+  relayer?: string
+  nonce?: bigint
+  timestamp: number
+}
 
 export const TransactionsTable = () => {
   const { data: wallets } = useWallets()
@@ -19,7 +32,31 @@ export const TransactionsTable = () => {
   const filteredTransactions = useMemo(() => {
     if (!events) return []
 
-    let filtered = [...events.metaTransfers]
+    // Combine meta transfers and deposits into a single array
+    const allTransactions: Transaction[] = [
+      ...events.metaTransfers.map((tx) => ({
+        transactionHash: tx.transactionHash,
+        blockNumber: tx.blockNumber,
+        from: tx.from,
+        to: tx.to,
+        amount: tx.amount,
+        type: tx.isPlatformTransfer ? ('Internal' as const) : ('External' as const),
+        relayer: tx.relayer,
+        nonce: tx.nonce,
+        timestamp: tx.timestamp,
+      })),
+      ...events.tokensDeposited.map((tx) => ({
+        transactionHash: tx.transactionHash,
+        blockNumber: tx.blockNumber,
+        from: '0x0000000000000000000000000000000000000000',
+        to: tx.to,
+        amount: tx.amount,
+        type: 'Deposit' as const,
+        timestamp: tx.timestamp,
+      })),
+    ]
+
+    let filtered = allTransactions
 
     // Apply amount filters
     if (minAmount) {
@@ -43,13 +80,13 @@ export const TransactionsTable = () => {
 
   const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage)
 
-  if (isLoading) {
+  if (isLoading || !events) {
     return (
       <div className="p-6 rounded border border-light-border dark:border-dark-border bg-light-surface dark:bg-dark-surface">
         <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary mb-4">
           Recent Transactions
         </h3>
-        <div className="h-96 w-full bg-light-border dark:bg-dark-border animate-pulse rounded" />
+        <ShimmerLoader variant="table" />
       </div>
     )
   }
@@ -177,19 +214,21 @@ export const TransactionsTable = () => {
                   <td className="py-3 px-4 text-sm">
                     <span
                       className={`px-2 py-1 rounded text-xs font-medium ${
-                        tx.isPlatformTransfer
+                        tx.type === 'Internal'
                           ? 'bg-light-success/10 text-light-success dark:bg-dark-success/10 dark:text-dark-success'
+                          : tx.type === 'Deposit'
+                          ? 'bg-green-500/10 text-green-600 dark:bg-green-500/10 dark:text-green-400'
                           : 'bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary'
                       }`}
                     >
-                      {tx.isPlatformTransfer ? 'Internal' : 'External'}
+                      {tx.type}
                     </span>
                   </td>
                   <td className="py-3 px-4 text-sm font-mono text-light-text-primary dark:text-dark-text-primary">
-                    {shortenAddress(tx.relayer)}
+                    {tx.relayer ? shortenAddress(tx.relayer) : '-'}
                   </td>
                   <td className="py-3 px-4 text-sm text-light-text-primary dark:text-dark-text-primary">
-                    {tx.nonce.toString()}
+                    {tx.nonce ? tx.nonce.toString() : '-'}
                   </td>
                 </tr>
               ))

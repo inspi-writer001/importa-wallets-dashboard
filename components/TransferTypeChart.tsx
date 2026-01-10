@@ -5,6 +5,7 @@ import { useContractEvents } from '@/hooks/useContractEvents'
 import { useMemo } from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
 import { TransferType } from '@/lib/types'
+import { ShimmerLoader } from './ShimmerLoader'
 
 const COLORS = {
   [TransferType.IMPORTA_TO_IMPORTA]: '#10B981',
@@ -39,13 +40,13 @@ export const TransferTypeChart = () => {
     ].filter((item) => item.value > 0)
   }, [events])
 
-  if (isLoading) {
+  if (isLoading || !events) {
     return (
       <div className="p-6 rounded border border-light-border dark:border-dark-border bg-light-surface dark:bg-dark-surface">
         <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary mb-4">
           Transfer Type Distribution
         </h3>
-        <div className="h-80 w-full bg-light-border dark:bg-dark-border animate-pulse rounded" />
+        <ShimmerLoader variant="chart" />
       </div>
     )
   }

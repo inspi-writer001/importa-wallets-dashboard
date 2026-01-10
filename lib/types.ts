@@ -62,6 +62,14 @@ export interface TokensBurnedEvent {
   timestamp: number
 }
 
+export interface TokensDepositedEvent {
+  to: Address
+  amount: bigint
+  blockNumber: bigint
+  transactionHash: `0x${string}`
+  timestamp: number
+}
+
 export interface WalletsApiResponse {
   response: string[]
 }
