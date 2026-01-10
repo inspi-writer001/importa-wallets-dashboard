@@ -47,9 +47,9 @@ export const SummaryCards = () => {
     if (!events) {
       return {
         totalActiveWallets: 0,
-        totalMetaTransfers24h: 0,
+        totalTransfers24h: 0,
         totalVolumeProcessed: 0n,
-        totalDeposits: 0,
+        totalMints: 0,
       }
     }
 
@@ -57,20 +57,20 @@ export const SummaryCards = () => {
     const oneDayAgo = now - 24 * 60 * 60
 
     // Filter events from last 24 hours using actual timestamps
-    const recentTransfers = events.metaTransfers.filter((event) => {
+    const recentTransfers = events.transfers.filter((event) => {
       return event.timestamp >= oneDayAgo
     })
 
-    const totalVolume = events.metaTransfers.reduce(
+    const totalVolume = events.transfers.reduce(
       (sum, event) => sum + event.amount,
       0n
     )
 
     return {
       totalActiveWallets: wallets?.length || 0,
-      totalMetaTransfers24h: recentTransfers.length,
+      totalTransfers24h: recentTransfers.length,
       totalVolumeProcessed: totalVolume,
-      totalDeposits: events.tokensDeposited.length,
+      totalMints: events.mints.length,
     }
   }, [events, wallets])
 
@@ -83,8 +83,8 @@ export const SummaryCards = () => {
         isLoading={walletsLoading}
       />
       <StatCard
-        title="MetaTransfers (24h)"
-        value={formatNumber(metrics.totalMetaTransfers24h)}
+        title="Transfers (24h)"
+        value={formatNumber(metrics.totalTransfers24h)}
         subtitle="Last 24 hours"
         isLoading={eventsLoading}
       />
@@ -95,10 +95,10 @@ export const SummaryCards = () => {
         isLoading={eventsLoading}
       />
       <StatCard
-        title="Circulating Supply"
-        value={formatTokenAmount(totalSupply || 0n)}
-        subtitle="Total tNGN in circulation"
-        isLoading={totalSupplyLoading}
+        title="Total Mints"
+        value={formatNumber(metrics.totalMints)}
+        subtitle="Deposits (all time)"
+        isLoading={eventsLoading}
       />
     </div>
   )

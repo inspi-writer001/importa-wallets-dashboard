@@ -18,7 +18,7 @@ export const TopWalletsChart = () => {
     // Count transactions per wallet (both as sender and receiver)
     const walletTxCount = new Map<Address, number>()
 
-    events.metaTransfers.forEach((event) => {
+    events.transfers.forEach((event) => {
       const fromCount = walletTxCount.get(event.from) || 0
       const toCount = walletTxCount.get(event.to) || 0
 

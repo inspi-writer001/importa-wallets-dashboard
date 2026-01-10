@@ -19,7 +19,7 @@ export const VolumeChart = () => {
     // Group transfers by day
     const volumeByDay = new Map<string, { volume: number; count: number; timestamp: number }>()
 
-    events.metaTransfers.forEach((event) => {
+    events.transfers.forEach((event) => {
       const date = formatDate(event.timestamp)
 
       const existing = volumeByDay.get(date) || { volume: 0, count: 0, timestamp: event.timestamp }

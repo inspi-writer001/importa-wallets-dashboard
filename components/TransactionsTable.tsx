@@ -14,9 +14,7 @@ type Transaction = {
   from: string
   to: string
   amount: bigint
-  type: 'Internal' | 'External' | 'Deposit'
-  relayer?: string
-  nonce?: bigint
+  type: 'Transfer' | 'Mint' | 'Burn'
   timestamp: number
 }
 
@@ -32,26 +30,33 @@ export const TransactionsTable = () => {
   const filteredTransactions = useMemo(() => {
     if (!events) return []
 
-    // Combine meta transfers and deposits into a single array
+    // Combine transfers, mints, and burns into a single array
     const allTransactions: Transaction[] = [
-      ...events.metaTransfers.map((tx) => ({
+      ...events.transfers.map((tx) => ({
         transactionHash: tx.transactionHash,
         blockNumber: tx.blockNumber,
         from: tx.from,
         to: tx.to,
         amount: tx.amount,
-        type: tx.isPlatformTransfer ? ('Internal' as const) : ('External' as const),
-        relayer: tx.relayer,
-        nonce: tx.nonce,
+        type: 'Transfer' as const,
         timestamp: tx.timestamp,
       })),
-      ...events.tokensDeposited.map((tx) => ({
+      ...events.mints.map((tx) => ({
         transactionHash: tx.transactionHash,
         blockNumber: tx.blockNumber,
         from: '0x0000000000000000000000000000000000000000',
         to: tx.to,
         amount: tx.amount,
-        type: 'Deposit' as const,
+        type: 'Mint' as const,
+        timestamp: tx.timestamp,
+      })),
+      ...events.burns.map((tx) => ({
+        transactionHash: tx.transactionHash,
+        blockNumber: tx.blockNumber,
+        from: tx.from,
+        to: '0x0000000000000000000000000000000000000000',
+        amount: tx.amount,
+        type: 'Burn' as const,
         timestamp: tx.timestamp,
       })),
     ]
@@ -168,18 +173,12 @@ export const TransactionsTable = () => {
               <th className="text-left py-3 px-4 text-xs font-semibold text-light-text-secondary dark:text-dark-text-secondary">
                 Type
               </th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                Relayer
-              </th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-light-text-secondary dark:text-dark-text-secondary">
-                Nonce
-              </th>
             </tr>
           </thead>
           <tbody>
             {paginatedTransactions.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-center py-8 text-light-text-tertiary dark:text-dark-text-tertiary">
+                <td colSpan={6} className="text-center py-8 text-light-text-tertiary dark:text-dark-text-tertiary">
                   No transactions found
                 </td>
               </tr>
@@ -214,21 +213,15 @@ export const TransactionsTable = () => {
                   <td className="py-3 px-4 text-sm">
                     <span
                       className={`px-2 py-1 rounded text-xs font-medium ${
-                        tx.type === 'Internal'
-                          ? 'bg-light-success/10 text-light-success dark:bg-dark-success/10 dark:text-dark-success'
-                          : tx.type === 'Deposit'
+                        tx.type === 'Transfer'
+                          ? 'bg-blue-500/10 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
+                          : tx.type === 'Mint'
                           ? 'bg-green-500/10 text-green-600 dark:bg-green-500/10 dark:text-green-400'
-                          : 'bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary'
+                          : 'bg-red-500/10 text-red-600 dark:bg-red-500/10 dark:text-red-400'
                       }`}
                     >
                       {tx.type}
                     </span>
-                  </td>
-                  <td className="py-3 px-4 text-sm font-mono text-light-text-primary dark:text-dark-text-primary">
-                    {tx.relayer ? shortenAddress(tx.relayer) : '-'}
-                  </td>
-                  <td className="py-3 px-4 text-sm text-light-text-primary dark:text-dark-text-primary">
-                    {tx.nonce ? tx.nonce.toString() : '-'}
                   </td>
                 </tr>
               ))

@@ -17,7 +17,7 @@ export const TransactionCountChart = () => {
     // Group transactions by day
     const countByDay = new Map<string, { count: number; timestamp: number }>()
 
-    events.metaTransfers.forEach((event) => {
+    events.transfers.forEach((event) => {
       const date = formatDate(event.timestamp)
 
       const existing = countByDay.get(date) || { count: 0, timestamp: event.timestamp }

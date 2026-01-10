@@ -27,13 +27,26 @@ export interface FeeStructure {
   normalTransferFee: bigint
 }
 
-export interface MetaTransferExecutedEvent {
+export interface TransferEvent {
   from: Address
   to: Address
   amount: bigint
-  isPlatformTransfer: boolean
-  relayer: Address
-  nonce: bigint
+  blockNumber: bigint
+  transactionHash: `0x${string}`
+  timestamp: number
+}
+
+export interface MintEvent {
+  to: Address
+  amount: bigint
+  blockNumber: bigint
+  transactionHash: `0x${string}`
+  timestamp: number
+}
+
+export interface BurnTransferEvent {
+  from: Address
+  amount: bigint
   blockNumber: bigint
   transactionHash: `0x${string}`
   timestamp: number
@@ -62,21 +75,13 @@ export interface TokensBurnedEvent {
   timestamp: number
 }
 
-export interface TokensDepositedEvent {
-  to: Address
-  amount: bigint
-  blockNumber: bigint
-  transactionHash: `0x${string}`
-  timestamp: number
-}
-
 export interface WalletsApiResponse {
   response: string[]
 }
 
 export interface DashboardMetrics {
   totalActiveWallets: number
-  totalMetaTransfers24h: number
+  totalTransfers24h: number
   totalVolumeProcessed: bigint
   totalFeesBurned: bigint
 }

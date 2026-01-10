@@ -12,17 +12,19 @@ import {
   BLOCKS_PER_DAY,
 } from '@/lib/constants'
 import type {
-  MetaTransferExecutedEvent,
+  TransferEvent,
+  MintEvent,
+  BurnTransferEvent,
   FeesCollectedEvent,
   TokensBurnedEvent,
-  TokensDepositedEvent,
 } from '@/lib/types'
 
 interface ContractEventsData {
-  metaTransfers: MetaTransferExecutedEvent[]
+  transfers: TransferEvent[]
+  mints: MintEvent[]
+  burns: BurnTransferEvent[]
   feesCollected: FeesCollectedEvent[]
   tokensBurned: TokensBurnedEvent[]
-  tokensDeposited: TokensDepositedEvent[]
 }
 
 const hedera = defineChain({
@@ -54,10 +56,11 @@ const fetchContractEvents = async (
   if (walletAddresses.length === 0) {
     console.log('[useContractEvents] No wallet addresses provided')
     return {
-      metaTransfers: [],
+      transfers: [],
+      mints: [],
+      burns: [],
       feesCollected: [],
       tokensBurned: [],
-      tokensDeposited: [],
     }
   }
 
@@ -106,11 +109,14 @@ const fetchContractEvents = async (
     return results
   }
 
-  // Fetch MetaTransferExecuted events in batches
-  const metaTransferLogs = await processBatches(chunks, (chunk) =>
+  // Define zero address for burn and mint detection
+  const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000' as Address
+
+  // Fetch ALL Transfer events (including regular transfers, mints, and burns)
+  const transferLogs = await processBatches(chunks, (chunk) =>
     publicClient.getLogs({
       address: PROXY_ADDRESS,
-      event: tNGN_ABI.find((e) => e.type === 'event' && e.name === 'MetaTransferExecuted')!,
+      event: tNGN_ABI.find((e) => e.type === 'event' && e.name === 'Transfer')!,
       fromBlock: chunk.from,
       toBlock: chunk.to,
     })
@@ -136,31 +142,17 @@ const fetchContractEvents = async (
     })
   )
 
-  // Fetch Transfer events (mints) where from is address(0) in batches
-  const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000' as Address
-  const transferMintLogs = await processBatches(chunks, (chunk) =>
-    publicClient.getLogs({
-      address: PROXY_ADDRESS,
-      event: tNGN_ABI.find((e) => e.type === 'event' && e.name === 'Transfer')!,
-      args: { from: ZERO_ADDRESS },
-      fromBlock: chunk.from,
-      toBlock: chunk.to,
-    })
-  )
-
   console.log('[useContractEvents] Raw logs fetched:', {
-    metaTransferLogs: metaTransferLogs.length,
+    transferLogs: transferLogs.length,
     feesCollectedLogs: feesCollectedLogs.length,
     tokensBurnedLogs: tokensBurnedLogs.length,
-    transferMintLogs: transferMintLogs.length,
   })
 
   // Get unique block numbers to fetch timestamps
   const uniqueBlocks = new Set<bigint>()
-  metaTransferLogs.forEach((log) => uniqueBlocks.add(log.blockNumber))
+  transferLogs.forEach((log) => uniqueBlocks.add(log.blockNumber))
   feesCollectedLogs.forEach((log) => uniqueBlocks.add(log.blockNumber))
   tokensBurnedLogs.forEach((log) => uniqueBlocks.add(log.blockNumber))
-  transferMintLogs.forEach((log) => uniqueBlocks.add(log.blockNumber))
 
   // Fetch block timestamps (in batches to avoid rate limits)
   const blockTimestamps = new Map<bigint, number>()
@@ -189,27 +181,57 @@ const fetchContractEvents = async (
     }
   }
 
-  // Filter and transform MetaTransferExecuted events
-  const metaTransfers: MetaTransferExecutedEvent[] = metaTransferLogs
-    .filter((log) => {
-      const from = log.args.from?.toLowerCase()
-      const to = log.args.to?.toLowerCase()
-      return (
-        walletAddresses.some((addr) => addr === from) ||
-        walletAddresses.some((addr) => addr === to)
-      )
-    })
-    .map((log) => ({
-      from: log.args.from!,
-      to: log.args.to!,
-      amount: log.args.amount!,
-      isPlatformTransfer: log.args.isPlatformTransfer!,
-      relayer: log.args.relayer!,
-      nonce: log.args.nonce!,
-      blockNumber: log.blockNumber,
-      transactionHash: log.transactionHash,
-      timestamp: blockTimestamps.get(log.blockNumber) || 0,
-    }))
+  // Split Transfer events into regular transfers, burns, and mints
+  const transfers: TransferEvent[] = []
+  const burns: BurnTransferEvent[] = []
+  const mints: MintEvent[] = []
+
+  transferLogs.forEach((log) => {
+    const from = log.args.from!
+    const to = log.args.to!
+    const amount = log.args.value!
+    const fromLower = from.toLowerCase()
+    const toLower = to.toLowerCase()
+    const zeroLower = ZERO_ADDRESS.toLowerCase()
+
+    // Check if the wallet is involved in this transfer
+    const isWalletInvolved =
+      walletAddresses.some((addr) => addr === fromLower) ||
+      walletAddresses.some((addr) => addr === toLower)
+
+    if (!isWalletInvolved) return
+
+    // Categorize the transfer
+    if (fromLower === zeroLower) {
+      // Mint: from zero address to wallet
+      mints.push({
+        to,
+        amount,
+        blockNumber: log.blockNumber,
+        transactionHash: log.transactionHash,
+        timestamp: blockTimestamps.get(log.blockNumber) || 0,
+      })
+    } else if (toLower === zeroLower) {
+      // Burn: from wallet to zero address
+      burns.push({
+        from,
+        amount,
+        blockNumber: log.blockNumber,
+        transactionHash: log.transactionHash,
+        timestamp: blockTimestamps.get(log.blockNumber) || 0,
+      })
+    } else {
+      // Regular transfer: wallet to wallet
+      transfers.push({
+        from,
+        to,
+        amount,
+        blockNumber: log.blockNumber,
+        transactionHash: log.transactionHash,
+        timestamp: blockTimestamps.get(log.blockNumber) || 0,
+      })
+    }
+  })
 
   // Filter and transform FeesCollected events
   const feesCollected: FeesCollectedEvent[] = feesCollectedLogs
@@ -250,32 +272,20 @@ const fetchContractEvents = async (
       timestamp: blockTimestamps.get(log.blockNumber) || 0,
     }))
 
-  // Filter and transform Transfer (mint/deposit) events
-  const tokensDeposited: TokensDepositedEvent[] = transferMintLogs
-    .filter((log) => {
-      const to = log.args.to?.toLowerCase()
-      return walletAddresses.some((addr) => addr === to)
-    })
-    .map((log) => ({
-      to: log.args.to!,
-      amount: log.args.value!,
-      blockNumber: log.blockNumber,
-      transactionHash: log.transactionHash,
-      timestamp: blockTimestamps.get(log.blockNumber) || 0,
-    }))
-
   console.log('[useContractEvents] Filtered events:', {
-    metaTransfers: metaTransfers.length,
+    transfers: transfers.length,
+    mints: mints.length,
+    burns: burns.length,
     feesCollected: feesCollected.length,
     tokensBurned: tokensBurned.length,
-    tokensDeposited: tokensDeposited.length,
   })
 
   return {
-    metaTransfers,
+    transfers,
+    mints,
+    burns,
     feesCollected,
     tokensBurned,
-    tokensDeposited,
   }
 }
 
