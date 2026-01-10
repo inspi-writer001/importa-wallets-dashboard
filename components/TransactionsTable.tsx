@@ -114,6 +114,9 @@ export const TransactionsTable = () => {
           <thead>
             <tr className="border-b border-light-border dark:border-dark-border">
               <th className="text-left py-3 px-4 text-xs font-semibold text-light-text-secondary dark:text-dark-text-secondary">
+                Tx Hash
+              </th>
+              <th className="text-left py-3 px-4 text-xs font-semibold text-light-text-secondary dark:text-dark-text-secondary">
                 Block
               </th>
               <th className="text-left py-3 px-4 text-xs font-semibold text-light-text-secondary dark:text-dark-text-secondary">
@@ -139,7 +142,7 @@ export const TransactionsTable = () => {
           <tbody>
             {paginatedTransactions.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center py-8 text-light-text-tertiary dark:text-dark-text-tertiary">
+                <td colSpan={8} className="text-center py-8 text-light-text-tertiary dark:text-dark-text-tertiary">
                   No transactions found
                 </td>
               </tr>
@@ -149,6 +152,16 @@ export const TransactionsTable = () => {
                   key={`${tx.transactionHash}-${index}`}
                   className="border-b border-light-border dark:border-dark-border hover:bg-light-border dark:hover:bg-dark-border transition-colors"
                 >
+                  <td className="py-3 px-4 text-sm font-mono">
+                    <a
+                      href={`https://hashscan.io/mainnet/transaction/${tx.transactionHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-light-primary dark:text-dark-primary hover:underline"
+                    >
+                      {shortenAddress(tx.transactionHash)}
+                    </a>
+                  </td>
                   <td className="py-3 px-4 text-sm text-light-text-primary dark:text-dark-text-primary">
                     {tx.blockNumber.toString()}
                   </td>

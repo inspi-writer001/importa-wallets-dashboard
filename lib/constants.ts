@@ -1,5 +1,7 @@
 export const WALLETS_API_URL =
   'https://importa-pay-payments-x72y4.ondigitalocean.app/api/wallets/fetch-personal-users'
+export const PERSONAL_WALLETS_API_URL =
+  'https://importa-peronal-wallets-w938r.ondigitalocean.app/api/fetch-personal-wallets'
 
 export const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || ''
 export const CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ||

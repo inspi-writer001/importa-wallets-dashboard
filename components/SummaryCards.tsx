@@ -2,6 +2,7 @@
 
 import { useWallets } from '@/hooks/useWallets'
 import { useContractEvents } from '@/hooks/useContractEvents'
+import { useTotalSupply } from '@/hooks/useTotalSupply'
 import { formatTokenAmount, formatNumber } from '@/lib/utils'
 import { useMemo } from 'react'
 
@@ -39,6 +40,7 @@ const StatCard = ({ title, value, subtitle, isLoading }: StatCardProps) => {
 export const SummaryCards = () => {
   const { data: wallets, isLoading: walletsLoading } = useWallets()
   const { data: events, isLoading: eventsLoading } = useContractEvents(wallets || [])
+  const { data: totalSupply, isLoading: totalSupplyLoading } = useTotalSupply()
 
   const metrics = useMemo(() => {
     if (!events) {
@@ -46,7 +48,6 @@ export const SummaryCards = () => {
         totalActiveWallets: 0,
         totalMetaTransfers24h: 0,
         totalVolumeProcessed: 0n,
-        totalFeesBurned: 0n,
       }
     }
 
@@ -63,20 +64,14 @@ export const SummaryCards = () => {
       0n
     )
 
-    const totalFees = events.feesCollected.reduce(
-      (sum, event) => sum + event.psbFee + event.importaFee + event.fgFee,
-      0n
-    )
-
     return {
       totalActiveWallets: wallets?.length || 0,
       totalMetaTransfers24h: recentTransfers.length,
       totalVolumeProcessed: totalVolume,
-      totalFeesBurned: totalFees,
     }
   }, [events, wallets])
 
-  const isLoading = walletsLoading || eventsLoading
+  const isLoading = walletsLoading || eventsLoading || totalSupplyLoading
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -99,9 +94,9 @@ export const SummaryCards = () => {
         isLoading={isLoading}
       />
       <StatCard
-        title="Total Fees Burned"
-        value={formatTokenAmount(metrics.totalFeesBurned)}
-        subtitle="tNGN burned"
+        title="Circulating Supply"
+        value={formatTokenAmount(totalSupply || 0n)}
+        subtitle="Total tNGN in circulation"
         isLoading={isLoading}
       />
     </div>

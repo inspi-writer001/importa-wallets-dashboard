@@ -4,7 +4,9 @@ import { Header } from '@/components/Header'
 import { SummaryCards } from '@/components/SummaryCards'
 import { VolumeChart } from '@/components/VolumeChart'
 import { TransferTypeChart } from '@/components/TransferTypeChart'
-import { FeeBreakdownChart } from '@/components/FeeBreakdownChart'
+import { TopWalletsChart } from '@/components/TopWalletsChart'
+import { TransactionCountChart } from '@/components/TransactionCountChart'
+import { ContractInfo } from '@/components/ContractInfo'
 import { TransactionsTable } from '@/components/TransactionsTable'
 
 export default function DashboardPage() {
@@ -14,6 +16,11 @@ export default function DashboardPage() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="space-y-8">
+          {/* Contract Information */}
+          <section>
+            <ContractInfo />
+          </section>
+
           {/* Summary Cards */}
           <section>
             <SummaryCards />
@@ -25,8 +32,9 @@ export default function DashboardPage() {
             <TransferTypeChart />
           </section>
 
-          <section>
-            <FeeBreakdownChart />
+          <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <TopWalletsChart />
+            <TransactionCountChart />
           </section>
 
           {/* Transactions Table */}
