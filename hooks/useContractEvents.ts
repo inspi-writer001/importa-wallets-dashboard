@@ -17,6 +17,7 @@ import type {
   BurnTransferEvent,
   FeesCollectedEvent,
   TokensBurnedEvent,
+  MetaTransferEvent,
 } from '@/lib/types'
 
 interface ContractEventsData {
@@ -25,6 +26,7 @@ interface ContractEventsData {
   burns: BurnTransferEvent[]
   feesCollected: FeesCollectedEvent[]
   tokensBurned: TokensBurnedEvent[]
+  metatransfers: MetaTransferEvent[]
 }
 
 const hedera = defineChain({
@@ -61,6 +63,7 @@ const fetchContractEvents = async (
       burns: [],
       feesCollected: [],
       tokensBurned: [],
+      metatransfers: [],
     }
   }
 
@@ -142,10 +145,21 @@ const fetchContractEvents = async (
     })
   )
 
+  // Fetch MetaTransferExecuted events in batches
+  const metaTransferLogs = await processBatches(chunks, (chunk) =>
+    publicClient.getLogs({
+      address: PROXY_ADDRESS,
+      event: tNGN_ABI.find((e) => e.type === 'event' && e.name === 'MetaTransferExecuted')!,
+      fromBlock: chunk.from,
+      toBlock: chunk.to,
+    })
+  )
+
   console.log('[useContractEvents] Raw logs fetched:', {
     transferLogs: transferLogs.length,
     feesCollectedLogs: feesCollectedLogs.length,
     tokensBurnedLogs: tokensBurnedLogs.length,
+    metaTransferLogs: metaTransferLogs.length,
   })
 
   // Get unique block numbers to fetch timestamps
@@ -153,6 +167,7 @@ const fetchContractEvents = async (
   transferLogs.forEach((log) => uniqueBlocks.add(log.blockNumber))
   feesCollectedLogs.forEach((log) => uniqueBlocks.add(log.blockNumber))
   tokensBurnedLogs.forEach((log) => uniqueBlocks.add(log.blockNumber))
+  metaTransferLogs.forEach((log) => uniqueBlocks.add(log.blockNumber))
 
   // Fetch block timestamps (in batches to avoid rate limits)
   const blockTimestamps = new Map<bigint, number>()
@@ -272,12 +287,35 @@ const fetchContractEvents = async (
       timestamp: blockTimestamps.get(log.blockNumber) || 0,
     }))
 
+  // Filter and transform MetaTransferExecuted events
+  const metatransfers: MetaTransferEvent[] = metaTransferLogs
+    .filter((log) => {
+      const from = log.args.from?.toLowerCase()
+      const to = log.args.to?.toLowerCase()
+      return (
+        walletAddresses.some((addr) => addr === from) ||
+        walletAddresses.some((addr) => addr === to)
+      )
+    })
+    .map((log) => ({
+      from: log.args.from!,
+      to: log.args.to!,
+      amount: log.args.amount!,
+      isPlatformTransfer: log.args.isPlatformTransfer!,
+      relayer: log.args.relayer!,
+      nonce: log.args.nonce!,
+      blockNumber: log.blockNumber,
+      transactionHash: log.transactionHash,
+      timestamp: blockTimestamps.get(log.blockNumber) || 0,
+    }))
+
   console.log('[useContractEvents] Filtered events:', {
     transfers: transfers.length,
     mints: mints.length,
     burns: burns.length,
     feesCollected: feesCollected.length,
     tokensBurned: tokensBurned.length,
+    metatransfers: metatransfers.length,
   })
 
   return {
@@ -286,6 +324,7 @@ const fetchContractEvents = async (
     burns,
     feesCollected,
     tokensBurned,
+    metatransfers,
   }
 }
 

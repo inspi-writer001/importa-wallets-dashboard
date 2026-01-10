@@ -27,6 +27,17 @@ export const TransactionCountChart = () => {
       })
     })
 
+    // Include metatransactions in count calculations
+    events.metatransfers.forEach((event) => {
+      const date = formatDate(event.timestamp)
+
+      const existing = countByDay.get(date) || { count: 0, timestamp: event.timestamp }
+      countByDay.set(date, {
+        count: existing.count + 1,
+        timestamp: existing.timestamp,
+      })
+    })
+
     // Convert to array and sort by timestamp
     return Array.from(countByDay.entries())
       .map(([date, data]) => ({

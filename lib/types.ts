@@ -75,6 +75,18 @@ export interface TokensBurnedEvent {
   timestamp: number
 }
 
+export interface MetaTransferEvent {
+  from: Address
+  to: Address
+  amount: bigint
+  isPlatformTransfer: boolean
+  relayer: Address
+  nonce: bigint
+  blockNumber: bigint
+  transactionHash: `0x${string}`
+  timestamp: number
+}
+
 export interface WalletsApiResponse {
   response: string[]
 }

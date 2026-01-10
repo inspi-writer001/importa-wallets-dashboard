@@ -30,6 +30,18 @@ export const VolumeChart = () => {
       })
     })
 
+    // Include metatransactions in volume calculations
+    events.metatransfers.forEach((event) => {
+      const date = formatDate(event.timestamp)
+
+      const existing = volumeByDay.get(date) || { volume: 0, count: 0, timestamp: event.timestamp }
+      volumeByDay.set(date, {
+        volume: existing.volume + parseFloat(formatUnits(event.amount, TOKEN_DECIMALS)),
+        count: existing.count + 1,
+        timestamp: existing.timestamp,
+      })
+    })
+
     // Convert to array and sort by timestamp
     return Array.from(volumeByDay.entries())
       .map(([date, data]) => ({

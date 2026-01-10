@@ -61,15 +61,26 @@ export const SummaryCards = () => {
       return event.timestamp >= oneDayAgo
     })
 
+    // Include metatransactions in 24h count
+    const recentMetaTransfers = events.metatransfers.filter((event) => {
+      return event.timestamp >= oneDayAgo
+    })
+
     const totalVolume = events.transfers.reduce(
+      (sum, event) => sum + event.amount,
+      0n
+    )
+
+    // Include metatransactions in total volume
+    const totalMetaVolume = events.metatransfers.reduce(
       (sum, event) => sum + event.amount,
       0n
     )
 
     return {
       totalActiveWallets: wallets?.length || 0,
-      totalTransfers24h: recentTransfers.length,
-      totalVolumeProcessed: totalVolume,
+      totalTransfers24h: recentTransfers.length + recentMetaTransfers.length,
+      totalVolumeProcessed: totalVolume + totalMetaVolume,
       totalMints: events.mints.length,
     }
   }, [events, wallets])

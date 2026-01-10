@@ -14,7 +14,7 @@ type Transaction = {
   from: string
   to: string
   amount: bigint
-  type: 'Transfer' | 'Mint' | 'Burn'
+  type: 'Transfer' | 'Mint' | 'Burn' | 'MetaTransfer'
   timestamp: number
 }
 
@@ -30,7 +30,7 @@ export const TransactionsTable = () => {
   const filteredTransactions = useMemo(() => {
     if (!events) return []
 
-    // Combine transfers, mints, and burns into a single array
+    // Combine transfers, mints, burns, and metatransfers into a single array
     const allTransactions: Transaction[] = [
       ...events.transfers.map((tx) => ({
         transactionHash: tx.transactionHash,
@@ -57,6 +57,15 @@ export const TransactionsTable = () => {
         to: '0x0000000000000000000000000000000000000000',
         amount: tx.amount,
         type: 'Burn' as const,
+        timestamp: tx.timestamp,
+      })),
+      ...events.metatransfers.map((tx) => ({
+        transactionHash: tx.transactionHash,
+        blockNumber: tx.blockNumber,
+        from: tx.from,
+        to: tx.to,
+        amount: tx.amount,
+        type: 'MetaTransfer' as const,
         timestamp: tx.timestamp,
       })),
     ]
@@ -217,6 +226,8 @@ export const TransactionsTable = () => {
                           ? 'bg-blue-500/10 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
                           : tx.type === 'Mint'
                           ? 'bg-green-500/10 text-green-600 dark:bg-green-500/10 dark:text-green-400'
+                          : tx.type === 'MetaTransfer'
+                          ? 'bg-purple-500/10 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400'
                           : 'bg-red-500/10 text-red-600 dark:bg-red-500/10 dark:text-red-400'
                       }`}
                     >

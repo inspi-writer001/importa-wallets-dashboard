@@ -26,6 +26,15 @@ export const TopWalletsChart = () => {
       walletTxCount.set(event.to, toCount + 1)
     })
 
+    // Include metatransactions in wallet transaction counts
+    events.metatransfers.forEach((event) => {
+      const fromCount = walletTxCount.get(event.from) || 0
+      const toCount = walletTxCount.get(event.to) || 0
+
+      walletTxCount.set(event.from, fromCount + 1)
+      walletTxCount.set(event.to, toCount + 1)
+    })
+
     // Convert to array and sort by transaction count
     const sortedWallets = Array.from(walletTxCount.entries())
       .map(([address, count]) => ({
